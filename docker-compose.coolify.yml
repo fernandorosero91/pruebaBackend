@@ -1,3 +1,9 @@
+# Docker Compose para Despliegue en Coolify
+# Usa este archivo para configurar el despliegue en Coolify
+# Las variables de entorno se configuran directamente en Coolify
+
+version: '3.8'
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -5,11 +11,7 @@ services:
     environment:
       POSTGRES_DB: clipers_db
       POSTGRES_USER: clipers_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clipers_password}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U clipers_user -d clipers_db"]
       interval: 10s
@@ -18,7 +20,6 @@ services:
     restart: unless-stopped
     networks:
       - clipers-network
-
 
   clipers-backend:
     build:
@@ -29,14 +30,17 @@ services:
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/clipers_db
       DATABASE_USERNAME: clipers_user
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-clipers_password}
-      JWT_SECRET: ${JWT_SECRET:-mySecretKey123456789012345678901234567890123456789012345678901234567890}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      FILE_UPLOAD_BASE_URL: ${FILE_UPLOAD_BASE_URL:-http://localhost:8080}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      FRONTEND_URL: ${FRONTEND_URL}
+      FILE_UPLOAD_BASE_URL: ${FILE_UPLOAD_BASE_URL}
       JPA_SHOW_SQL: false
       LOG_LEVEL_CLIPERS: INFO
       LOG_LEVEL_SECURITY: WARN
+      # Configuración específica para Coolify
+      spring.jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
+      spring.jpa.hibernate.ddl-auto: validate
     ports:
       - "8080:8080"
     volumes:
